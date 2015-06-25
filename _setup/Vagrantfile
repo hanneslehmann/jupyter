@@ -1,0 +1,376 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+
+Vagrant.configure(2) do |config|
+  # The most common configuration options are documented and commented below.
+  # For a complete reference, please see the online documentation at
+  # https://docs.vagrantup.com.
+
+  # Every Vagrant development environment requires a box. You can search for
+  # boxes at https://atlas.hashicorp.com/search.
+  config.vm.box = "ubuntu/trusty32"
+  config.vm.provider "virtualbox" do |v|
+     v.memory = 2048
+     v.cpus = 2
+  end
+
+  # Disable automatic box update checking. If you disable this, then
+  # boxes will only be checked for updates when the user runs
+  # `vagrant box outdated`. This is not recommended.
+  # config.vm.box_check_update = false
+
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine. In the example below,
+  # accessing "localhost:8080" will access port 80 on the guest machine.
+  config.vm.network "forwarded_port", guest: 80,   host: 10080 # nginx
+  config.vm.network "forwarded_port", guest: 1883, host: 11883 # Mosquitto (MQTT)
+  config.vm.network "forwarded_port", guest: 3306, host: 13306 # mysql
+  config.vm.network "forwarded_port", guest: 5672, host: 15672 # RabbitMQ -AMQP 
+  config.vm.network "forwarded_port", guest: 5671, host: 15671 # RabbitMQ -AMQP
+  config.vm.network "forwarded_port", guest: 61613, host: 11613 # RabbitMQ -STOMP 
+  config.vm.network "forwarded_port", guest: 61614, host: 11614 # RabbitMQ -STOMP
+  config.vm.network "forwarded_port", guest: 6379, host: 16379 # redis
+  config.vm.network "forwarded_port", guest: 27017,host: 17017 # mongodb
+  config.vm.network "forwarded_port", guest: 1880, host: 11880 # node-red
+  config.vm.network "forwarded_port", guest: 8888, host: 18888 # jupyter
+  config.vm.network "forwarded_port", guest: 8001, host: 18001
+  config.vm.network "forwarded_port", guest: 8080, host: 18080 # gitlab
+
+
+  # Create a private network, which allows host-only access to the machine
+  # using a specific IP.
+  # config.vm.network "private_network", ip: "192.168.33.10"
+
+  # Create a public network, which generally matched to bridged network.
+  # Bridged networks make the machine appear as another physical device on
+  # your network.
+  # config.vm.network "public_network"
+
+  # Share an additional folder to the guest VM. The first argument is
+  # the path on the host to the actual folder. The second argument is
+  # the path on the guest to mount the folder. And the optional third
+  # argument is a set of non-required options.
+  # config.vm.synced_folder "../data", "/vagrant_data"
+
+  # Provider-specific configuration so you can fine-tune various
+  # backing providers for Vagrant. These expose provider-specific options.
+  # Example for VirtualBox:
+  #
+  # config.vm.provider "virtualbox" do |vb|
+  #   # Display the VirtualBox GUI when booting the machine
+  #   vb.gui = true
+  #
+  #   # Customize the amount of memory on the VM:
+  #   vb.memory = "1024"
+  # end
+  #
+  # View the documentation for the provider you are using for more
+  # information on available options.
+
+  # Define a Vagrant Push strategy for pushing to Atlas. Other push strategies
+  # such as FTP and Heroku are also available. See the documentation at
+  # https://docs.vagrantup.com/v2/push/atlas.html for more information.
+  # config.push.define "atlas" do |push|
+  #   push.app = "YOUR_ATLAS_USERNAME/YOUR_APPLICATION_NAME"
+  # end
+
+  # Enable provisioning with a shell script. Additional provisioners such as
+  # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
+  # documentation for more information about their specific syntax and use.
+   
+  $script = <<-SHELL
+    ## Uncomment following lines, if you have a central apt-cache server approx installed
+	  cp /etc/apt/sources.list /etc/apt/sources.list.backup.approx
+      echo "192.168.15.20      approx" |  tee -a  /etc/hosts 
+	  sed -i 's/us.archive.ubuntu.com/approx:9999/g' /etc/apt/sources.list
+	  sed -i 's/security.ubuntu.com/approx:9999/g' /etc/apt/sources.list
+	  sed -i 's/archive.ubuntu.com/approx:9999/g' /etc/apt/sources.list
+	  sed -i 's/us.archive.ubuntu.com/approx:9999/g' /etc/apt/sources.list
+	  sed -i 's/us.archive.ubuntu.com/approx:9999/g' /etc/apt/sources.list
+     ## Regular start of the setup	  
+	 apt-get update
+	 echo "mysql-server-5.5 mysql-server/root_password password root" | debconf-set-selections
+     echo "mysql-server-5.5 mysql-server/root_password_again password root" | debconf-set-selections
+     sudo apt-get install -y git ant python3 python-pip python-software-properties curl ca-certificates postfix mercurial make binutils bison gcc build-essential g++ cmake nginx
+     echo "deb http://cran.rstudio.com/bin/linux/ubuntu precise/" |  tee /etc/apt/sources.list.d/r-cran.list
+	 sudo add-apt-repository ppa:marutter/rrutter -y
+	 sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys E084DAB9
+	 sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10 # mongodb
+	 echo "deb http://repo.mongodb.org/apt/ubuntu $(lsb_release -sc)/mongodb-org/3.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-3.0.list
+     sudo apt-get update
+     sudo apt-get install -y  lua5.2 liblua5.2-dev r-base pandoc python-zmq python-dev python-matplotlib  ghc r-cran-gplots haskell-platform mosquitto golang libzmq3-dev mosquitto-clients mysql-server mysql-client libmysqlclient-dev opam mongodb expect python2.7-dev libxext-dev python-qt4 qt4-dev-tools rabbitmq-server python3-pip libfreetype6-dev luarocks graphviz
+	 # ipython3 ipython3-notebook
+	 
+	 pip install virtualenv
+	 pip install virtualenvwrapper
+	 #BASE_DIR='/opt/workon' && mkdir $BASE_DIR && chmod a+w $BASE_DIR && export WORKON_HOME=$BASE_DIR/Envs  && chmod a+w $BASE_DIR/Envs && echo "export WORKON_HOME=$BASE_DIR/Envs" >> /etc/bash.bashrc
+	 #source /usr/local/bin/virtualenvwrapper.sh && echo "source /usr/local/bin/virtualenvwrapper.sh" >> /etc/bash.bashrc
+	 #BASE_DIR='/opt/workon' && export WORKON_HOME=$BASE_DIR/Envs && echo "export PIP_VIRTUALENV_BASE=$WORKON_HOME" >> /etc/bash.bashrc "
+	 # cd /tmp && wget http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.11.2/PyQt-x11-gpl-4.11.2.tar.gz
+	 cd /tmp && wget http://sourceforge.net/projects/pyqt/files/PyQt4/PyQt-4.11.4/PyQt-x11-gpl-4.11.4.tar.gz 
+	 cd /tmp && wget http://sourceforge.net/projects/pyqt/files/sip/sip-4.16.4/sip-4.16.4.tar.gz
+	 cd /tmp && tar -zxvf PyQt-x11-gpl-4.11.4.tar.gz
+	 cd /tmp && tar -zxvf sip-4.16.4.tar.gz
+	 cd /tmp/sip-4.16.4/ && python configure.py && make && make install
+	 cd /tmp/sip-4.16.4/ && python3 configure.py && make && make install
+     ##Remove need for user input in the middle of the script - TODO: move this to start of script.
+	 sudo sed -i 's/resp = sys.stdin.readline()/resp = "yes"/g' /tmp/PyQt-x11-gpl-4.11.4/configure-ng.py
+	 cd /tmp/PyQt-x11-gpl-4.11.4/ && python configure-ng.py && make && make install
+	 cd /tmp/PyQt-x11-gpl-4.11.4/ && python3 configure-ng.py && make && make install
+	
+   	 ### Install NodeJS
+	 cd  /home/vagrant/ && curl -sL https://deb.nodesource.com/setup |  bash -
+	 sudo apt-get install -y nodejs
+	 sudo apt-get install -y npm
+	 npm config set registry http://registry.npmjs.org/
+	 sudo ln -s /usr/bin/nodejs /usr/bin/node
+	 
+	 ### Install iPython and prerequisites
+	 pip install markupsafe certifi pyzmq jinja2 tornado jsonschema functools32 numpy  pysimplesoap ipython-sql nxpd--upgrade
+	 pip install "ipython[all]"
+	 pip3 install "ipython[all]"
+	 pip install redis pymongo mpld3 vispy mysql-python
+	 pip3 install redis pymongo mpld3 vispy nxpd mysql-python
+	 cd ~
+	 wget https://bitbucket.org/pypa/setuptools/raw/bootstrap/ez_setup.py
+     python ez_setup.py
+     python3 ez_setup.py
+	 easy_install -U distribute
+	  
+	 ### Install NodeJS-Kernel
+	 mkdir -p /home/vagrant/kernel_node 
+	 cd  /home/vagrant/kernel_node	 
+	 wget https://github.com/notablemind/jupyter-nodejs/releases/download/v1.1.0/jupyter-nodejs-1.1.0.tgz
+	 cd /home/vagrant/kernel_node && tar xf jupyter-nodejs-1.1.0.tgz
+	 mkdir -p /home/vagrant/.ipython/kernels/nodejs
+	 chown -R vagrant:vagrant /home/vagrant/
+	 
+	 ### Setup R
+	 sudo -H -u vagrant bash -c "mkdir -p ~/.R/libs/"
+	 sudo -H -u vagrant bash -c "echo 'R_LIBS=~/.R/libs/' > /home/vagrant/.Renviron"
+	 echo 'options(repos=structure(c(CRAN="http://cran.rstudio.com")))' | tee /home/vagrant/.Rprofile
+	 chown vagrant:vagrant /home/vagrant/.Rprofile
+	 echo "install.packages(c('codetools', 'rzmq' ,'base64enc', 'evaluate', 'jsonlite', 'uuid', 'digest'))" > /home/vagrant/r_install.script
+	 echo "install.packages(c('repr','IRkernel','IRdisplay'), repos='http://irkernel.github.io/')" >> /home/vagrant/r_install.script
+	 chown vagrant:vagrant /home/vagrant/r_install.script
+	 
+	 ### Install IHaskell
+	 #cd /home/vagrant/ && git clone http://www.github.com/gibiansky/IHaskell --depth=1
+	 #cabal update
+	 #cabal install cabal cabal-install 
+	 #cd /home/vagrant/IHaskell/ && ./ubuntu_install.sh all # Build and install IHaskell
+	 
+	 ## Install Go-Kernel
+	 su vagrant -c "echo 'export GOPATH=\$HOME/go' >> ~/.profile"
+     su vagrant -c "echo 'export PATH=\$PATH:\$GOPATH/bin' >> ~/.profile"
+	 sudo -H -u vagrant bash -c 'mkdir /home/vagrant/go'
+	 sudo -H -u vagrant bash -c "mkdir -p /home/vagrant/.ipython/kernels/igo"
+	 sudo -H -u vagrant bash -c 'cd /home/vagrant/ && source .profile && go get -tags zmq_3_x github.com/takluyver/igo'
+	 sudo -H -u vagrant bash -c 'cd /home/vagrant/ && source .profile && cp -r /home/vagrant/go/src/github.com/takluyver/igo/kernel/* /home/vagrant/.ipython/kernels/igo'
+	 sed -i 's/\$GOPATH/\/home\/vagrant\/go/g' /home/vagrant/.ipython/kernels/igo/kernel.json
+	 
+	 # bash < <(curl -s -S -L https://raw.githubusercontent.com/moovweb/gvm/master/binscripts/gvm-installer)
+	 # echo '[[ -s "$HOME/.gvm/scripts/gvm" ]] && source "$HOME/.gvm/scripts/gvm"' >> $HOME/.bashrc
+	 
+	 ## Install LUA Kernel
+	 sudo -H -u vagrant bash -c "git clone https://github.com/facebook/iTorch.git --depth=1"
+     sudo -H -u vagrant bash -c "cd /home/vagrant/iTorch & luarocks make --local"
+	 sudo -H -u vagrant bash -c "cd /home/vagrant/iTorch & luarocks install image --local"
+	 sudo -H -u vagrant bash -c "mkdir -p /home/vagrant/.ipython/kernels/itorch"
+	 sudo -H -u vagrant bash -c "cp /home/vagrant/iTorch/kernelspec/*.* /home/vagrant/.ipython/kernels/itorch"
+	 sed -i 's/LUA_BINDIR/\/home\/vagrant\/iTorch/g' /home/vagrant/.ipython/kernels/itorch/kernel.json
+	 chown -R vagrant:vagrant /home/vagrant/
+
+	 # Install addionitional NodeJS
+	 sudo npm install mongodb
+	 
+	 ## Install Node-Red
+	 npm install -g node-red
+	 npm install -g node-red-node-redis  
+	 npm install -g node-mysql 
+	 npm install -g sqlite3
+	 
+	 ## install ocaml
+	 #cd /home/vagrant
+	 #opam init -a
+	 #opam update
+	 #opam install iocaml -y
+	 
+	 ## setup MySQL for GitLab and access from external (e.g. Workbench)
+	 # create script
+	 echo "CREATE USER 'gitlab'@'localhost' IDENTIFIED BY 'gitlab';" > /home/vagrant/git_setup.sql
+	 echo "CREATE DATABASE IF NOT EXISTS \\\`gitlabhq_production\\\` DEFAULT CHARACTER SET \\\`utf8\\\` COLLATE \\\`utf8_unicode_ci\\\`;" >> /home/vagrant/git_setup.sql
+	 echo "GRANT SELECT, LOCK TABLES, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER ON \\\`gitlabhq_production\\\`.* TO 'gitlab'@'localhost';" >> /home/vagrant/git_setup.sql
+	 echo "CREATE USER 'tester'@'localhost' IDENTIFIED BY 'test';" > /home/vagrant/git_setup.sql
+	 echo "CREATE DATABASE IF NOT EXISTS \\\`test_db\\\` DEFAULT CHARACTER SET \\\`utf8\\\` COLLATE \\\`utf8_unicode_ci\\\`;" >> /home/vagrant/git_setup.sql
+	 echo "GRANT SELECT, LOCK TABLES, INSERT, UPDATE, DELETE, CREATE, DROP, INDEX, ALTER ON \\\`test_db\\\`.* TO 'test'@'localhost';" >> /home/vagrant/git_setup.sql
+	 echo "CREATE TABLE \\\`test_db\\\`.\\\`test\\\` (\\\`test\\\` int(11) NOT NULL, PRIMARY KEY (\\\`test\\\`)) ENGINE=InnoDB DEFAULT CHARSET=latin1;" >> /home/vagrant/git_setup.sql
+	 echo "Insert into \\\`p\\\`.test VALUES(1)" >> /home/vagrant/git_setup.sql
+	 chown vagrant:vagrant /home/vagrant/git_setup.sql
+	 # Create credentials file, might be deleted afterwards!
+	 echo "[client]" > /home/vagrant/.my.cnf
+	 echo "user = root"  >> /home/vagrant/.my.cnf
+	 echo "password = root"  >> /home/vagrant/.my.cnf
+	 cp /home/vagrant/.my.cnf /root
+	 chown vagrant:vagrant /home/vagrant/.my.cnf
+	 # run sql script for GitLab setup
+	 sudo -H -u vagrant bash -c "cat /home/vagrant/git_setup.sql | mysql"
+	 # make some tweaks to grant access from outside of the box
+	 sed -i 's/skip-external-locking/#skip-external-locking/g' /etc/mysql/my.cnf ## for access from outside
+	 sed -i 's/bind-address/#bind-address/g' /etc/mysql/my.cnf ## for access from outside
+     echo "GRANT ALL PRIVILEGES ON *.* TO 'root'@'%' WITH GRANT OPTION;" | mysql   ## for access from outside
+	 # flush and restart to apply changes
+	 sudo -H -u vagrant bash -c "echo 'FLUSH PRIVILEGES;' | mysql" 
+	 /etc/init.d/mysql restart
+	 
+	 ## Install ruby
+	 apt-get remove ruby
+	 apt-get install -y build-essential zlib1g-dev libyaml-dev libssl-dev libgdbm-dev libreadline-dev libncurses5-dev libffi-dev curl git-core openssh-server redis-server checkinstall libxml2-dev libxslt-dev libcurl4-openssl-dev libicu-dev camlp4-extra m4 zlib1g-dev tk-dev python3-tk
+	 mkdir -p /tmp/ruby && cd /tmp/ruby && curl -L --progress http://cache.ruby-lang.org/pub/ruby/2.1/ruby-2.1.5.tar.gz | sudo tar xz
+	 cd /tmp/ruby/ruby-2.1.5 && ./configure --disable-install-rdoc
+	 cd /tmp/ruby/ruby-2.1.5 && make
+	 cd /tmp/ruby/ruby-2.1.5 && sudo make install
+	 gem install bundler --no-ri --no-rdoc
+	 
+	 ## Installation of Gitlab
+	 adduser --disabled-login --gecos 'GitLab' git
+	 cd /home/git && sudo -u git -H git clone https://gitlab.com/gitlab-org/gitlab-ce.git -b 7-12-stable gitlab --depth=1
+	 sudo -u git -H cp /home/git/gitlab/config/gitlab.yml.example /home/git/gitlab/config/gitlab.yml
+	 sudo -u git -H cp /home/git/gitlab/config/unicorn.rb.example /home/git/gitlab/config/unicorn.rb
+	 sudo -u git -H cp /home/git/gitlab/config/database.yml.mysql /home/git/gitlab/config/database.yml
+	 sudo -u git -H cp /home/git/gitlab/config/resque.yml.example /home/git/gitlab/config/resque.yml
+	 sudo -u git sed -i 's/username: git/username: gitlab/g' /home/git/gitlab/config/database.yml
+	 sudo -u git sed -i 's/password: "secure password"/password: "gitlab"/g' /home/git/gitlab/config/database.yml
+	 sudo -u git -H chmod o-rwx /home/git/gitlab/config/database.yml
+	 chown -R git /home/git/gitlab/log/
+	 chown -R git /home/git/gitlab/tmp/
+	 chmod -R u+rwX  /home/git/gitlab/log/
+	 chmod -R u+rwX  /home/git/gitlab/tmp/
+	 sudo -u git -H mkdir /home/git/gitlab-satellites
+	 sudo chmod u+rwx,g=rx,o-rwx /home/git/gitlab-satellites
+	 sudo -u git -H mkdir -p /home/git/gitlab/tmp/pids/
+	 sudo -u git -H mkdir -p /home/git/gitlab/tmp/sockets/
+	 chmod -R u+rwX  /home/git/gitlab/tmp/pids/
+	 chmod -R u+rwX  /home/git/gitlab/tmp/sockets/
+	 sudo -u git -H mkdir -p /home/git/gitlab/public/uploads
+	 chmod -R u+rwX  /home/git/gitlab/public/uploads
+
+	 # Post-Insall Git
+	 sudo -u git -H git config --global user.name "GitLab"
+	 sudo -u git -H git config --global user.email "gitlab@localhost"
+	 sudo -u git -H git config --global core.autocrlf input
+	 gem install charlock_holmes --version '0.6.9.4'
+	 su git -c "cd /home/git/gitlab && bundle install --deployment --without development test postgres aws"
+	 # let's get rid of the security question
+	 sed -i 's/answer = prompt(\"Do you want to continue (yes\/no)? \".blue, \%w{yes no})/answer =\"yes\"/g' /home/git/gitlab/lib/tasks/gitlab/task_helpers.rake
+	  
+	 # Setup Git and Webpage
+	 sudo -u git -H bash -c "cd /home/git/gitlab && bundle exec rake gitlab:setup RAILS_ENV=production"
+	 
+	 ## Installation GitLab Shell
+	 sudo -u git -H bash -c "cd /home/git/gitlab && bundle exec rake gitlab:shell:install[v2.6.3] REDIS_URL=unix:/var/run/redis/redis.sock RAILS_ENV=production"
+	 #cd /home/git && sudo -u git -H git clone https://github.com/gitlabhq/gitlab-shell.git --depth=1
+	 #cd /home/git/gitlab-shell && sudo -u git -H git checkout v2.6.3
+	 #cd /home/git/gitlab-shell && sudo -u git ./bin/install
+	 # sudo -H -u vagrant expect -c 'cd "/home/git/gitlab" && bundle exec rake gitlab:setup RAILS_ENV=production; expect \\"Do you want to continue (yes/no)?\\"; send \\"yes\\";'
+	 cp /home/git/gitlab/lib/support/nginx/gitlab /etc/nginx/sites-available/gitlab
+	 ln -s /etc/nginx/sites-available/gitlab /etc/nginx/sites-enabled/gitlab
+	 sed -i 's/YOUR_SERVER_FQDN/localhost/g' /etc/nginx/sites-available/gitlab
+	 service nginx start
+	 sudo cp /home/git/gitlab/lib/support/logrotate/gitlab /etc/logrotate.d/gitlab           # setup log rotation
+	 sudo cp /home/git/gitlab/lib/support/init.d/gitlab /etc/init.d/gitlab  # make git start at boot
+	 sudo update-rc.d gitlab defaults 21
+	 
+	 # Execute Kernel Setup
+	 pip install bash_kernel 
+	 chown vagrant:vagrant -R /home/vagrant/
+	 sudo -H -u vagrant bash -c "cd /home/vagrant && cat /home/vagrant/r_install.script | R --no-save >> /home/vagrant/r_install.log 2>&1"
+	 cd /home/vagrant/kernel_node/package && sudo -u vagrant -H npm install
+	 cd /home/vagrant/kernel_node/package && sudo -u vagrant -H node install.js
+	 # cd /home/vagrant/IHaskell && ihaskell install
+	 # gem install iruby  
+	 ipython profile create iocaml
+	 pip install redis_kernel 
+	 pip install pandas boilerpipe bokeh feedparser nltk BeautifulSoup scipy scikit-learn PyOpenGL networkx
+	 pip3 install pandas boilerpipe bokeh feedparser nltk BeautifulSoup scipy scikit-learn PyOpenGL networkx
+	 chown vagrant:vagrant -R /home/vagrant/
+
+	 # Start sequence for applications and node-red nodes    
+	 su vagrant -c "cd /home/vagrant/ && nohup node-red > /home/vagrant/node-red.log 2>&1 &"
+	 su vagrant -c "cd /home/vagrant/ && nohup redis-server > /home/vagrant/redis.log 2>&1 &"
+	 su vagrant -c "nohup rabbitmq-server > /home/vagrant/rabbitMQ.log 2>&1 &"
+	 pkill node-red ## Workaround to get node-red additional nodes activated
+	 # Execute node-red setup
+	 sudo -H -u vagrant bash -c "cd /home/vagrant/.node-red && npm install node-red-node-sqlite > /home/vagrant/node-install.log"
+	 sudo -H -u vagrant bash -c "cd /home/vagrant/.node-red && npm install node-red-node-mysql >> /home/vagrant/node-install.log"
+	 sudo -H -u vagrant bash -c "cd /home/vagrant/.node-red && npm install node-red-node-redis >> /home/vagrant/node-install.log"
+	 sudo -H -u vagrant bash -c "cd /home/vagrant/.node-red && npm install node-red-node-xmpp >> /home/vagrant/node-install.log"
+	 sudo -H -u vagrant bash -c "cd /home/vagrant/.node-red && npm install node-red-node-irc >> /home/vagrant/node-install.log"
+	 sudo -H -u vagrant bash -c "cd /home/vagrant/.node-red && npm install node-red-node-stomp >> /home/vagrant/node-install.log"
+	 su vagrant -c "cd /home/vagrant/notebooks && nohup node-red > /home/vagrant/node-red.log 2>&1 &"
+	 su vagrant -c "cd /home/vagrant/notebooks && nohup ipython notebook --ip=0.0.0.0 --no-browser > /home/vagrant/ipython.log 2>&1 &"
+	 pkill ipython ## Workaround to get R kernel activated
+	 # Activate R Kernel for iPython
+	 su vagrant -c "cd /home/vagrant &&echo 'IRkernel::installspec()' |  R --no-save >> /home/vagrant/r_install.log 2>&1"
+	 
+	 # Add Python 3
+	 sudo -H -u vagrant bash -c "ipython kernelspec install-self --user"
+	 sudo -H -u vagrant bash -c "cp -R /home/vagrant/.ipython/kernels/python2/ /home/vagrant/.ipython/kernels/python3"
+	 echo ' { "display_name": "Python 3",  ' > /home/vagrant/.ipython/kernels/python3/kernel.json
+	 echo '"language": "python", ' >> /home/vagrant/.ipython/kernels/python3/kernel.json
+	 echo '"argv": [ ' >> /home/vagrant/.ipython/kernels/python3/kernel.json
+	 echo '"python3", ' >> /home/vagrant/.ipython/kernels/python3/kernel.json
+	 echo '"-c", "from IPython.kernel.zmq.kernelapp import main; main()", ' >> /home/vagrant/.ipython/kernels/python3/kernel.json
+	 echo '"-f", "{connection_file}"' >> /home/vagrant/.ipython/kernels/python3/kernel.json
+	 echo '], ' >> /home/vagrant/.ipython/kernels/python3/kernel.json
+	 echo '"codemirror_mode": {' >> /home/vagrant/.ipython/kernels/python3/kernel.json
+	 echo '"version": 2, ' >> /home/vagrant/.ipython/kernels/python3/kernel.json
+	 echo '"name": "ipython"' >> /home/vagrant/.ipython/kernels/python3/kernel.json
+	 echo '}  }' >> /home/vagrant/.ipython/kernels/python3/kernel.json
+	 chown vagrant:vagrant -R /home/vagrant/.ipython/kernels/
+	 sudo -H -u vagrant bash -c "git clone https://github.com/matplotlib/matplotlib --depth=1"
+	 sudo -H -u vagrant bash -c "cd /home/vagrant/matplotlib && python3 setup.py build"
+	 sudo cd /home/vagrant/ && python3 setup.py install
+	 
+	 su vagrant -c "cd /home/vagrant/notebooks && nohup ipython notebook --ip=0.0.0.0 --no-browser >> /home/vagrant/ipython.log 2>&1 &"
+	 su git -c "/etc/init.d/gitlab start"
+	 # su vagrant -c "echo 'Access to gitlab: admin@local.host, pass: 5iveL!fe' > /home/vagrant/readme.gitlab"
+	 
+	 # Nearly finished, install some magic
+	 su vagrant -c "mkdir -p /home/vagrant/magic"
+	 su vagrant -c "cd /home/vagrant/ && git clone https://github.com/cjdrake/ipython-magic" # Graphviz Magics (gvmagic.py): %dot, %dotstr, %dotobj, %dotobjs
+	 
+	 ## Finish off - download some examples
+	 mkdir -p /home/vagrant/notebooks/examples
+	 mkdir -p /home/vagrant/notebooks/howto
+	 mkdir -p /home/vagrant/notebooks/tests
+	 cd /home/vagrant/notebooks/examples && wget http://jakevdp.github.io/mpl_tutorial/_downloads/01_basic_plotting.ipynb
+	 cd /home/vagrant/notebooks/examples && wget https://raw.githubusercontent.com/plotly/IPython-plotly/master/notebooks/survival_analysis/survival_analysis.ipynb
+	 cd /home/vagrant/notebooks/examples && wget https://raw.githubusercontent.com/bigsnarfdude/bsides_vancouver_2013/master/PickleRedis.ipynb
+	 cd /home/vagrant/notebooks/examples && wget https://raw.githubusercontent.com/DavidPowell/openmodes-examples/master/Using%20and%20creating%20geometric%20shapes.ipynb
+	 cd /home/vagrant/notebooks/examples && wget https://raw.githubusercontent.com/bokeh/bokeh-notebooks/master/tutorial/02%20-%20charts.ipynb
+	 cd /home/vagrant/notebooks/examples && wget https://raw.githubusercontent.com/ptwobrussell/Mining-the-Social-Web-2nd-Edition/master/ipynb/Chapter%205%20-%20Mining%20Web%20Pages.ipynb
+	 cd /home/vagrant/notebooks/examples && wget http://jakevdp.github.com/downloads/notebooks/XKCD_plots.ipynb
+	 cd /home/vagrant/notebooks/examples && wget https://raw.githubusercontent.com/justmarkham/DAT4/master/notebooks/08_linear_regression.ipynb
+	 cd /home/vagrant/notebooks/examples && wget https://raw.githubusercontent.com/ipython-books/cookbook-code/master/notebooks/chapter06_viz/06_vispy.ipynb
+	 cd /home/vagrant/notebooks/ && git clone https://github.com/ipython/ipython-in-depth.git --depth=1
+	 cd /home/vagrant/notebooks/examples && git clone https://github.com/terry.dolan/lfc.git project-lfc --depth=1
+	 cd /home/vagrant/notebooks/examples && git clone https://github.com/terry.dolan/prem.git --depth=1
+	 
+	 chown -R vagrant:vagrant /home/vagrant/
+	 # python to show installed modules
+	 # python -c 'import pip;  sorted(["%s==%s" % (i.key, i.version) for i in pip.get_installed_distributions()]);'
+	 # python test for pyqt: from PyQt4 import QtCore, QtGui
+	 # Info about gitlab: sudo -u git -H bundle exec rake gitlab:env:info RAILS_ENV=production
+	 # Info about back-ends: import matplotlib.rcsetup as rcsetup
+     # print(rcsetup.all_backends
+	 
+   SHELL
+   
+   config.vm.provision "shell", inline: $script
+end
