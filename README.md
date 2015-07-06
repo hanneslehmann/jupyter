@@ -1,11 +1,14 @@
 # jupyter
 Vagrant file to setup a virtualbox running some tools 
 - ipython (jupyter) with different kernels: Python2, Python3, NodeJS, iTorch, R, Bash, Go
+- Additionally to the mentioned languages there is Ruby
 - Node-Red
 - MySQL and Cassandra Database
-- elasticSearch, MongoDB and Redis
+- elasticSearch, MongoDB, Redis and etcd
 - RabbitMQ and Mosquitto
-- Kibana 4
+- Fluentd and Kibana 4 (Log analysis)
+- GitLab Repo Server (for project teams sharing locally data)
+- Hugo (static Web Page creator)
 
 Some ipython modules are already running quite well with the Python2 Kernel (bokeh, vispy, SimpleSoap, GraphViz, mpld3...)
 
@@ -17,7 +20,6 @@ Or can be used for learning programming with Python / Database / Messaging
 Status:
 Not everything is running smoothely, there is some more work needed:
 - to get additional node modules for Node-Red up and running (e.g. MySQL)
-- a gitlab Server is starting, but still not completly configured (not reachable)
 - Some kernels are still not running correct (Go, iTorch)
 - Some ipython modules might crash the kernel
 
