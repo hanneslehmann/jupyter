@@ -9,6 +9,7 @@ Vagrant file to setup a virtualbox running some tools
 - Fluentd and Kibana 4 (Log analysis)
 - GitLab Repo Server (for project teams sharing locally data)
 - Hugo (static Web Page creator)
+- nginx
 
 Some ipython modules are already running quite well with the Python2 Kernel (bokeh, vispy, SimpleSoap, GraphViz, mpld3...)
 
