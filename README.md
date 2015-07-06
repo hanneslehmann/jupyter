@@ -2,9 +2,10 @@
 Vagrant file to setup a virtualbox running some tools 
 - ipython (jupyter) with different kernels: Python2, Python3, NodeJS, iTorch, R, Bash, Go
 - Node-Red
-- MySQL Database
-- MongoDB and Redis
+- MySQL and Cassandra Database
+- elasticSearch, MongoDB and Redis
 - RabbitMQ and Mosquitto
+- Kibana 4
 
 Some ipython modules are already running quite well with the Python2 Kernel (bokeh, vispy, SimpleSoap, GraphViz, mpld3...)
 
